@@ -409,11 +409,20 @@ with stylable_container(
                     # Convert the seaborn pairplot into a Matplotlib figure to pass to st.pyplot()
                     st.pyplot(plt) 
                 except Exception as e:
-                    st.info(
+                    st.markdown(
                         """
+                        <div class="custom-info" style="color:black">
                         Try selecting a different field for the pair plot to explore new relationships 
                         between variables. This will allow you to visualize how two different fields 
                         interact and identify potential correlations or patterns in the data.
-                        """,
-                        icon="✍️",
+                        </div>
+                        """, unsafe_allow_html=True
                     )
+                    # st.info(
+                    #     """
+                    #     Try selecting a different field for the pair plot to explore new relationships 
+                    #     between variables. This will allow you to visualize how two different fields 
+                    #     interact and identify potential correlations or patterns in the data.
+                    #     """,
+                    #     icon="✍️",
+                    # )
