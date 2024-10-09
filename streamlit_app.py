@@ -426,3 +426,32 @@ with stylable_container(
                     #     """,
                     #     icon="✍️",
                     # )
+
+with stylable_container(
+        key="container_black",
+        css_styles="""
+            {
+                background-color: #000;
+                border-radius: 0.5rem;
+                padding: calc(1em - 1px);
+                color: #ffffff;
+            }
+            """,
+    ): 
+    with st.container():
+        # Add a section for introduction
+        colored_header(
+            label="Conclusion",
+            description="",
+            color_name="green-70",
+            header_color="white"
+        )
+        st.write(
+            """
+            In conclusion, the Cancer Patients Data analysis reveals key insights into gender, age, and cancer severity. 
+            Males make up **60%** of the dataset, with females at **40%.** Interestingly, females tend to develop cancer 
+            at a **younger age**, while males are _more likely_ to have **high-severity cases**. Despite this, 
+            females nearly **match** males in low-severity cases. These trends suggest important demographic patterns 
+            in cancer onset and severity, which could help inform future research and treatment approaches.
+            """
+        )
