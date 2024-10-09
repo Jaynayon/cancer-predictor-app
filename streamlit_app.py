@@ -366,3 +366,54 @@ with stylable_container(
             around _<u>two-thirds</u>_ the number of cases as males.
             """, unsafe_allow_html=True
         )
+
+with stylable_container(
+            key="container_default",
+            css_styles="""
+                {
+                    background-color: #f2f2f2;
+                    border-radius: 0.5rem;
+                    padding: calc(1em - 1px);
+                    color: #000;
+                }
+                """,
+        ): 
+        with st.container():
+            # Get the list of column names (fields) for user selection
+            columns = data.columns.tolist()
+
+            col1,col2 = st.columns(2)
+
+            # Create two dropdowns for selecting the fields
+            with col1:
+                field1 = st.selectbox('Select first field:', columns)
+            with col2:
+                field2 = st.selectbox('Select second field:', columns)
+
+            # Display the selected pairplot only when the user has selected both fields
+            if field1 and field2:
+                # Plot a scatter plot between the selected fields
+                st.write(f"{field1} vs {field2}")
+                
+                 # Scatter plot
+                fig1, ax1 = plt.subplots()
+                data.plot(kind='scatter', x=field1, y=field2, ax=ax1)
+                ax1.set_title(f'{field1} vs {field2}')
+                st.pyplot(fig1)
+                plt.clf()
+
+                try:
+                    # Pairplot (Seaborn)
+                    sns.pairplot(data[[field1, field2]])
+                    
+                    # Convert the seaborn pairplot into a Matplotlib figure to pass to st.pyplot()
+                    st.pyplot(plt) 
+                except Exception as e:
+                    st.info(
+                        """
+                        Try selecting a different field for the pair plot to explore new relationships 
+                        between variables. This will allow you to visualize how two different fields 
+                        interact and identify potential correlations or patterns in the data.
+                        """,
+                        icon="✍️",
+                    )
