@@ -4,6 +4,8 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 from streamlit_extras.stylable_container import stylable_container
 import os
 for dirname, _, filenames in os.walk('/kaggle/input'):
@@ -455,3 +457,84 @@ with stylable_container(
             in cancer onset and severity, which could help inform future research and treatment approaches.
             """
         )
+
+if not data.empty:
+    # Display dataset
+    st.write("### Dataset", data.head())
+
+    # Regression Analysis Section
+    with stylable_container(
+        css_styles="background-color: #f2f2f2; border-radius: 0.5rem; padding: calc(1em - 1px); color: #000;",
+        key="regression_container"
+    ):
+        colored_header(label="Regression Analysis", description="Build a regression model to predict outcomes.", color_name="blue-green-70", header_color="black")
+
+        st.write("### Select Variables for Regression")
+        independent_var = st.selectbox("Independent Variable:", data.columns, key="independent_var")
+        dependent_var = st.selectbox("Dependent Variable:", data.columns, key="dependent_var")
+
+        if independent_var == dependent_var:
+            st.error("Independent and dependent variables must be different.")
+        else:
+            X = data[[independent_var]].values
+            y = data[dependent_var].values
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+            model = LinearRegression()
+            model.fit(X_train, y_train)
+
+            st.write("### Regression Results")
+            st.write(f"Intercept: {model.intercept_}")
+            st.write(f"Coefficient: {model.coef_[0]}")
+
+            st.write("### Regression Plot")
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(x=X.flatten(), y=y, label="Data Points")
+            sns.lineplot(x=X.flatten(), y=model.predict(X), color="red", label="Regression Line")
+            plt.xlabel(independent_var)
+            plt.ylabel(dependent_var)
+            plt.legend()
+            st.pyplot(plt)
+
+            st.write("### Make a Prediction")
+            input_value = st.number_input(f"Enter a value for {independent_var}:", value=0.0, key="input_value")
+            if st.button("Predict", key="predict_button"):
+                prediction = model.predict(np.array([[input_value]]))[0]
+                st.success(f"Predicted value for {dependent_var}: {prediction:.2f}")
+
+    # Existing Cancer Dataset Analysis
+    with stylable_container(
+        css_styles="background-color: #000; border-radius: 0.5rem; padding: calc(1em - 1px); color: #ffffff;",
+        key="cancer_dataset_container"
+    ):
+        colored_header(label="Cancer Dataset Insights", description="Key statistics and visualizations.", color_name="orange-70", header_color="white")
+
+        # Display statistics and visualizations
+        st.write("### Key Statistics")
+        st.write(data.describe())
+
+        st.write("### Visualizations")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            data['Age'].hist(bins=10)
+            plt.title('Age Distribution')
+            plt.xlabel('Age')
+            plt.ylabel('Frequency')
+            st.pyplot(plt)
+
+        with col2:
+            sns.boxplot(x='Gender', y='Age', data=data)
+            plt.title('Age Distribution by Gender')
+            plt.xlabel('Gender (Male = 1, Female = 2)')
+            plt.ylabel('Age')
+            st.pyplot(plt)
+
+        sns.countplot(x='Gender', hue='Level', data=data)
+        plt.title('Cancer Levels by Gender')
+        plt.xlabel('Gender (Male = 1, Female = 2)')
+        plt.ylabel('Count of Patients')
+        st.pyplot(plt)
+else:
+    st.error("Unable to load dataset.")
