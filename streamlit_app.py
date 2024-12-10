@@ -57,7 +57,11 @@ def colored_header(
         st.caption(description)
 
 # Show app title and description.
-st.set_page_config(page_title="Cancer Prediction", page_icon="🎯")
+st.set_page_config(
+    page_title="Cancer Prediction", 
+    page_icon="🎯",
+    layout="wide",
+)
 st.title("🎯 Cancer Prediction")
 st.write(
     """
@@ -459,82 +463,141 @@ with stylable_container(
         )
 
 if not data.empty:
-    # Display dataset
-    st.write("### Dataset", data.head())
-
     # Regression Analysis Section
     with stylable_container(
-        css_styles="background-color: #f2f2f2; border-radius: 0.5rem; padding: calc(1em - 1px); color: #000;",
-        key="regression_container"
+        key="container_default",
+        css_styles="""
+            {
+                background-color: #f2f2f2;
+                border-radius: 0.5rem;
+                padding: calc(1em - 1px);
+                color: #000;
+            }
+            """,
     ):
-        colored_header(label="Regression Analysis", description="Build a regression model to predict outcomes.", color_name="blue-green-70", header_color="black")
+        with st.container():
+            colored_header(
+                label="Regression Analysis",
+                description="Build a regression model to predict outcomes.",
+                color_name="blue-green-70",
+                header_color="black"
+            )
+            st.write("### Select Variables for Regression")
+            independent_var = st.selectbox("Independent Variable:", data.columns, key="independent_var")
+            dependent_var = st.selectbox("Dependent Variable:", data.columns, key="dependent_var")
 
-        st.write("### Select Variables for Regression")
-        independent_var = st.selectbox("Independent Variable:", data.columns, key="independent_var")
-        dependent_var = st.selectbox("Dependent Variable:", data.columns, key="dependent_var")
+            if independent_var == dependent_var:
+                st.error("Independent and dependent variables must be different.")
+            else:
+                X = data[[independent_var]].values
+                y = data[dependent_var].values
 
-        if independent_var == dependent_var:
-            st.error("Independent and dependent variables must be different.")
-        else:
-            X = data[[independent_var]].values
-            y = data[dependent_var].values
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                model = LinearRegression()
+                model.fit(X_train, y_train)
 
-            model = LinearRegression()
-            model.fit(X_train, y_train)
+                st.write("### Regression Results")
+                st.write(f"Intercept: {model.intercept_}")
+                st.write(f"Coefficient: {model.coef_[0]}")
 
-            st.write("### Regression Results")
-            st.write(f"Intercept: {model.intercept_}")
-            st.write(f"Coefficient: {model.coef_[0]}")
+                st.write("### Regression Plot")
+                plt.figure(figsize=(8, 6))
+                sns.scatterplot(x=X.flatten(), y=y, label="Data Points")
+                sns.lineplot(x=X.flatten(), y=model.predict(X), color="red", label="Regression Line")
+                plt.xlabel(independent_var)
+                plt.ylabel(dependent_var)
+                plt.legend()
+                st.pyplot(plt)
 
-            st.write("### Regression Plot")
-            plt.figure(figsize=(8, 6))
-            sns.scatterplot(x=X.flatten(), y=y, label="Data Points")
-            sns.lineplot(x=X.flatten(), y=model.predict(X), color="red", label="Regression Line")
-            plt.xlabel(independent_var)
-            plt.ylabel(dependent_var)
-            plt.legend()
-            st.pyplot(plt)
-
-            st.write("### Make a Prediction")
-            input_value = st.number_input(f"Enter a value for {independent_var}:", value=0.0, key="input_value")
-            if st.button("Predict", key="predict_button"):
-                prediction = model.predict(np.array([[input_value]]))[0]
-                st.success(f"Predicted value for {dependent_var}: {prediction:.2f}")
+                st.write("### Make a Prediction")
+                input_value = st.number_input(f"Enter a value for {independent_var}:", value=0.0, key="input_value")
+                if st.button("Predict", key="predict_button"):
+                    prediction = model.predict(np.array([[input_value]]))[0]
+                    st.success(f"Predicted value for {dependent_var}: {prediction:.2f}")
 
     # Existing Cancer Dataset Analysis
     with stylable_container(
-        css_styles="background-color: #000; border-radius: 0.5rem; padding: calc(1em - 1px); color: #ffffff;",
-        key="cancer_dataset_container"
+        key="container_default",
+        css_styles="""
+            {
+                background-color: #f2f2f2;
+                border-radius: 0.5rem;
+                padding: calc(1em - 1px);
+                color: #000;
+            }
+            """,
     ):
-        colored_header(label="Cancer Dataset Insights", description="Key statistics and visualizations.", color_name="orange-70", header_color="white")
+        with st.container():
+            # Display a colored header
+            colored_header(
+                label="Cancer Dataset Insights",
+                description="Key statistics and visualizations.",
+                color_name="orange-70",
+                header_color="black"
+            )
+           
+            # Display statistics and visualizations
+            st.write("### Key Statistics")
+            st.write(data.describe())
 
-        # Display statistics and visualizations
-        st.write("### Key Statistics")
-        st.write(data.describe())
+            st.write("### Visualizations")
+            col1, col2 = st.columns(2) 
 
-        st.write("### Visualizations")
-        col1, col2 = st.columns(2)
+            with col1:
+                data['Age'].hist(bins=10)
+                plt.title('Age Distribution')
+                plt.xlabel('Age')
+                plt.ylabel('Frequency')
+                st.pyplot(plt)
 
-        with col1:
-            data['Age'].hist(bins=10)
-            plt.title('Age Distribution')
-            plt.xlabel('Age')
-            plt.ylabel('Frequency')
-            st.pyplot(plt)
+            with col2:
+                sns.boxplot(x='Gender', y='Age', data=data)
+                plt.title('Age Distribution by Gender')
+                plt.xlabel('Gender (Male = 1, Female = 2)')
+                plt.ylabel('Age')
+                st.pyplot(plt)
 
-        with col2:
-            sns.boxplot(x='Gender', y='Age', data=data)
-            plt.title('Age Distribution by Gender')
+            sns.countplot(x='Gender', hue='Level', data=data)
+            plt.title('Cancer Levels by Gender')
             plt.xlabel('Gender (Male = 1, Female = 2)')
-            plt.ylabel('Age')
+            plt.ylabel('Count of Patients')
             st.pyplot(plt)
-
-        sns.countplot(x='Gender', hue='Level', data=data)
-        plt.title('Cancer Levels by Gender')
-        plt.xlabel('Gender (Male = 1, Female = 2)')
-        plt.ylabel('Count of Patients')
-        st.pyplot(plt)
 else:
     st.error("Unable to load dataset.")
+
+
+st.title("Dynamic Histogram and KDE Plot")
+st.write("Upload your dataset and visualize distributions with customizable options.")
+     
+st.write("### Data Preview")
+st.write(data.head())
+
+numeric_cols = data.select_dtypes(include=['float64', 'int64']).columns
+selected_columns = st.multiselect("Select numeric columns to plot", numeric_cols)
+
+
+bins = st.slider("Number of bins", 5, 50, 10)
+kde_bandwidth = st.slider("KDE Bandwidth (smoothing)", 0.1, 2.0, 0.5)
+
+if selected_columns:
+    st.write("### Distribution Plots")
+    
+    
+    fig, axes = plt.subplots(nrows=len(selected_columns), ncols=1, figsize=(10, 5 * len(selected_columns)))
+
+    if len(selected_columns) == 1:
+        axes = [axes]  # Ensure axes is iterable for a single plot
+
+    for i, col in enumerate(selected_columns):
+        sns.histplot(data[col], bins=bins, kde=True, kde_kws={'bw_adjust': kde_bandwidth}, ax=axes[i])
+        axes[i].set_title(f'Distribution of {col}')
+        axes[i].set_xlabel(col)
+        axes[i].set_ylabel("Frequency")
+
+    st.pyplot(fig)
+
+    st.write("### Save Visualization")
+    if st.button("Download Image"):
+        fig.savefig("distribution_plot.png")
+        st.write("Image saved as 'distribution_plot.png'.")
