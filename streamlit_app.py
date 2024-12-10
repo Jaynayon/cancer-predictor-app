@@ -373,7 +373,8 @@ with stylable_container(
             """, unsafe_allow_html=True
         )
 
-with stylable_container(
+def logistic_regression():
+    with stylable_container(
             key="container_default",
             css_styles="""
                 {
@@ -383,55 +384,196 @@ with stylable_container(
                     color: #000;
                 }
                 """,
-        ): 
-        with st.container():
-            # Get the list of column names (fields) for user selection
-            columns = data.columns.tolist()
+        ):
+            with st.container():
+                # Add a section for introduction
+                colored_header(
+                    label="Logistic Regression Analysis",
+                    description="This section allows you to select variables for logistic regression.",
+                    color_name="blue-green-70",
+                    header_color="black"
+                )
 
-            col1,col2 = st.columns(2)
-
-            # Create two dropdowns for selecting the fields
-            with col1:
-                field1 = st.selectbox('Select first field:', columns)
-            with col2:
-                field2 = st.selectbox('Select second field:', columns)
-
-            # Display the selected pairplot only when the user has selected both fields
-            if field1 and field2:
-                # Plot a scatter plot between the selected fields
-                st.write(f"{field1} vs {field2}")
+                # Dividing the featurs and target
+                x=data.iloc[:,:23]
+                y=data['Level']
                 
-                 # Scatter plot
-                fig1, ax1 = plt.subplots()
-                data.plot(kind='scatter', x=field1, y=field2, ax=ax1)
-                ax1.set_title(f'{field1} vs {field2}')
-                st.pyplot(fig1)
-                plt.clf()
+                # Splitting the data into training and testing
+                from sklearn.model_selection import train_test_split
+                x_train,x_test,y_train,y_test=train_test_split(x,y)
 
-                try:
-                    # Pairplot (Seaborn)
-                    sns.pairplot(data[[field1, field2]])
+                from sklearn.linear_model import LogisticRegression
+                model=LogisticRegression()
+                model.fit(x_train,y_train)
+
+                # Define fields and options
+                fields = [
+                    "Age", "Gender", "Air Pollution", "Alcohol use", "Dust Allergy", 
+                    "Occupational Hazards", "Genetic Risk", "chronic Lung Disease", "Balanced Diet", 
+                    "Obesity", "Smoking", "Passive Smoker", "Chest Pain", "Coughing of Blood", "Fatigue", 
+                    "Weight Loss", "Shortness of Breath", "Wheezing", "Swallowing Difficulty", 
+                    "Clubbing of Finger Nails", "Frequent Cold", "Dry Cough", "Snoring"
+                ]
+
+                # Options for dropdowns
+                default_options = list(range(1, 10))  # Values 1 to 9
+                special_fields = {
+                    "Age (1-100)": list(range(1, 101)),  # Values 1 to 100
+                    "Gender (1 or 2)": [1, 2],  # Values 1 or 2
+                }
+
+                # Define themes and their corresponding fields
+                themes = {
+                    "Demographics": ["Age (1-100)", "Gender (1 or 2)"],
+                    "Environmental Factors": [
+                        "Air Pollution", "Alcohol use", "Dust Allergy", 
+                        "Occupational Hazards", "Genetic Risk", "chronic Lung Disease", 
+                        "Balanced Diet", "Obesity", "Smoking", "Passive Smoker"
+                    ],
+                    "Health Symptoms": [
+                        "Chest Pain", "Coughing of Blood", "Fatigue", 
+                        "Weight Loss", "Shortness of Breath", "Wheezing", 
+                        "Swallowing Difficulty", "Clubbing of Finger Nails", 
+                        "Frequent Cold", "Dry Cough", "Snoring"
+                    ]
+                }
+
+                # Options for dropdowns
+                default_options = list(range(1, 10))  # Values 1 to 9
+                special_fields = {
+                    "Age (1-100)": list(range(1, 101)),  # Values 1 to 100
+                    "Gender (1 or 2)": [1, 2],  # Values 1 or 2
+                }
+
+                # Collect inputs grouped by themes
+                inputs = []
+
+                for theme, fields in themes.items():
+                    st.write(f"### {theme}")  # Section title for each theme
+                    cols = st.columns(3)  # Always create exactly 3 columns
+                    for i, field in enumerate(fields):
+                        # Distribute the fields across 3 columns
+                        col = cols[i % 3]  # Cycle through the 3 columns
+                        options = special_fields.get(field, default_options)
+                        value = col.selectbox(
+                            field,
+                            options,
+                            index=0,
+                            placeholder=f"Select a value for {field}..."
+                        )
+                        inputs.append(value)
+
+                # Reshape the input data to match the expected input format
+                inputs_data = np.array(inputs).reshape(1, -1)
+
+                # Make the prediction
+                prediction = model.predict(inputs_data)
+
+                # Output the result
+                st.write(f"### Predicted Level: {prediction[0]}")
+
+def scatter_plot():
+    with stylable_container(
+                key="container_default",
+                css_styles="""
+                    {
+                        background-color: #f2f2f2;
+                        border-radius: 0.5rem;
+                        padding: calc(1em - 1px);
+                        color: #000;
+                    }
+                    """,
+            ): 
+            with st.container():
+                # Get the list of column names (fields) for user selection
+                columns = data.columns.tolist()
+
+                col1,col2 = st.columns(2)
+
+                # Create two dropdowns for selecting the fields
+                with col1:
+                    field1 = st.selectbox('Select first field:', columns)
+                with col2:
+                    field2 = st.selectbox('Select second field:', columns)
+
+                # Display the selected pairplot only when the user has selected both fields
+                if field1 and field2:
+                    # Plot a scatter plot between the selected fields
+                    st.write(f"{field1} vs {field2}")
                     
-                    # Convert the seaborn pairplot into a Matplotlib figure to pass to st.pyplot()
-                    st.pyplot(plt) 
-                except Exception as e:
-                    st.markdown(
-                        """
-                        <div class="custom-info" style="color:black">
-                        Try selecting a different field for the pair plot to explore new relationships 
-                        between variables. This will allow you to visualize how two different fields 
-                        interact and identify potential correlations or patterns in the data.
-                        </div>
-                        """, unsafe_allow_html=True
-                    )
-                    # st.info(
-                    #     """
-                    #     Try selecting a different field for the pair plot to explore new relationships 
-                    #     between variables. This will allow you to visualize how two different fields 
-                    #     interact and identify potential correlations or patterns in the data.
-                    #     """,
-                    #     icon="✍️",
-                    # )
+                    # Scatter plot
+                    fig1, ax1 = plt.subplots()
+                    data.plot(kind='scatter', x=field1, y=field2, ax=ax1)
+                    ax1.set_title(f'{field1} vs {field2}')
+                    st.pyplot(fig1)
+                    plt.clf()
+
+                    try:
+                        # Pairplot (Seaborn)
+                        sns.pairplot(data[[field1, field2]])
+                        
+                        # Convert the seaborn pairplot into a Matplotlib figure to pass to st.pyplot()
+                        st.pyplot(plt) 
+                    except Exception as e:
+                        st.markdown(
+                            """
+                            <div class="custom-info" style="color:black">
+                            Try selecting a different field for the pair plot to explore new relationships 
+                            between variables. This will allow you to visualize how two different fields 
+                            interact and identify potential correlations or patterns in the data.
+                            </div>
+                            """, unsafe_allow_html=True
+                        )
+
+# Sidebar navigation
+st.sidebar.title("Visualization Options")
+visualization = st.sidebar.radio(
+    "Choose a Visualization",
+    ("Box Plot", "Descriptive Statistics", "Scatter Plot", "Logistic Regression")
+)
+
+# Box Plot Function
+def plot_box(data, column):
+    plt.figure(figsize=(8, 5))
+    sns.boxplot(data=data, x=column)
+    plt.title(f'Box Plot of {column}')
+    plt.xlabel(column)
+    st.pyplot(plt)  # Display in Streamlit
+
+# Descriptive Statistics Function
+def get_descriptive_stats(data):
+    return data.describe().T  # Transpose for better readability
+
+# Plot Means Function
+def plot_means(data):
+    means = data.mean()
+    plt.figure(figsize=(10, 5))
+    plt.bar(means.index, means.values, color='skyblue')
+    plt.title("Feature Means")
+    plt.ylabel("Mean Value")
+    plt.xlabel("Features")
+    st.pyplot(plt)
+
+# Main content based on selection
+if visualization == "Box Plot":
+    st.subheader("Box Plot")
+    column = st.selectbox("Select a feature for Box Plot:", data.columns[:-1])  # Exclude target if needed
+    plot_box(data, column)
+
+elif visualization == "Descriptive Statistics":
+    st.subheader("Descriptive Statistics")
+    stats = get_descriptive_stats(data)
+    st.write("Summary Statistics:")
+    st.dataframe(stats)
+    
+    if st.checkbox("Show Feature Means Chart"):
+        plot_means(data.iloc[:, :-1]) 
+
+elif visualization == "Scatter Plot":
+    scatter_plot()
+
+elif visualization == "Logistic Regression":
+    logistic_regression()
 
 with stylable_container(
         key="container_black",
@@ -601,3 +743,33 @@ if selected_columns:
     if st.button("Download Image"):
         fig.savefig("distribution_plot.png")
         st.write("Image saved as 'distribution_plot.png'.")
+
+with stylable_container(
+        key="container_black",
+        css_styles="""
+            {
+                background-color: #000;
+                border-radius: 0.5rem;
+                padding: calc(1em - 1px);
+                color: #ffffff;
+            }
+            """,
+    ): 
+    with st.container():
+        # Add a section for introduction
+        colored_header(
+            label="Conclusion",
+            description="",
+            color_name="green-70",
+            header_color="white"
+        )
+        st.write(
+            """
+            In conclusion, the Cancer Patients Data analysis reveals key insights into gender, age, and cancer severity. 
+            Males make up **60%** of the dataset, with females at **40%.** Interestingly, females tend to develop cancer 
+            at a **younger age**, while males are _more likely_ to have **high-severity cases**. Despite this, 
+            females nearly **match** males in low-severity cases. These trends suggest important demographic patterns 
+            in cancer onset and severity, which could help inform future research and treatment approaches.
+            """
+        )
+
