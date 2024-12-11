@@ -448,6 +448,19 @@ def logistic_regression():
                 # Collect inputs grouped by themes
                 inputs = []
 
+                from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+                # Assuming y_test and predict are already defined in your notebook
+                predict=model.predict(x_test)
+                conf_matrix = confusion_matrix(y_test, predict)
+                disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix)
+
+                # Plot confusion matrix
+                disp.plot(cmap=plt.cm.Blues)
+                plt.title('Confusion Matrix')
+                plt.show()
+                st.pyplot(plt)
+
                 for theme, fields in themes.items():
                     st.write(f"### {theme}")  # Section title for each theme
                     cols = st.columns(3)  # Always create exactly 3 columns
